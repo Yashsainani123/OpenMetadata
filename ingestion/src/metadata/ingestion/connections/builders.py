@@ -34,6 +34,7 @@ from metadata.ingestion.connections.headers import inject_query_header_by_conn
 from metadata.ingestion.connections.query_logger import attach_query_tracker
 from metadata.ingestion.connections.secrets import connection_with_options_secrets
 from metadata.utils.constants import BUILDER_PASSWORD_ATTR
+from metadata.utils.host_port_utils import validate_host_port
 from metadata.utils.logger import cli_logger
 
 logger = cli_logger()
@@ -137,6 +138,9 @@ def get_password_secret(connection) -> SecretStr:
     Helper to extract the password secret from the connection object.
     Handles BasicAuth, IamAuth, and falls back to empty SecretStr if not found.
     """
+    if hasattr(connection, "hostPort") and connection.hostPort:
+        validate_host_port(str(connection.hostPort))
+
     password = getattr(connection, BUILDER_PASSWORD_ATTR, None)
 
     if not password:
@@ -180,6 +184,8 @@ def get_connection_url_common(connection) -> str:
     """
     Common method for building the source connection urls
     """
+    if hasattr(connection, "hostPort") and connection.hostPort:
+        validate_host_port(str(connection.hostPort))
 
     url = f"{connection.scheme.value}://"
 

@@ -36,6 +36,7 @@ from metadata.ingestion.ometa.ometa_api import OpenMetadata
 from metadata.ingestion.source.models import TableView
 from metadata.utils import fqn
 from metadata.utils.execution_time_tracker import calculate_execution_time_generator
+from metadata.utils.host_port_utils import validate_host_port
 from metadata.utils.logger import utils_logger
 
 logger = utils_logger()
@@ -48,6 +49,8 @@ def get_host_from_host_port(uri: str) -> str:
     if uri is like "localhost:9000"
     then return the host "localhost"
     """
+    if uri:
+        validate_host_port(uri)
     return uri.split(":")[0]
 
 
