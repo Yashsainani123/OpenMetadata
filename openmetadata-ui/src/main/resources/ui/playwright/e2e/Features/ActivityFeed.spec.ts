@@ -19,6 +19,8 @@ import { UserClass } from '../../support/user/UserClass';
 import { REACTION_EMOJIS, reactOnFeed } from '../../utils/activityFeed';
 import { performAdminLogin } from '../../utils/admin';
 import {
+  getAuthContext,
+  getToken,
   redirectToHomePage,
   removeLandingBanner,
   uuid,
@@ -411,7 +413,6 @@ test.describe('Mention notifications in Notification Box', () => {
 
     await apiContext.post('/api/v1/feed', {
       data: {
-        from: adminUser.responseData.name,
         message: 'Initial conversation thread for mention test',
         about: `<#E::table::${entity.entityResponseData.fullyQualifiedName}>`,
         type: 'Conversation',
