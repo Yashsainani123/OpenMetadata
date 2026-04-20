@@ -430,7 +430,14 @@ test.describe('Mention notifications in Notification Box', () => {
     await test.step('User1 mentions admin user in a reply', async () => {
       await entity.visitEntityPage(user1Page);
 
+      const feedResponsePromise = user1Page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/v1/feed') &&
+          response.url().includes('type=Conversation') &&
+          response.request().method() === 'GET'
+      );
       await user1Page.getByTestId('activity_feed').click();
+      await feedResponsePromise;
 
       await waitForAllLoadersToDisappear(user1Page);
 
