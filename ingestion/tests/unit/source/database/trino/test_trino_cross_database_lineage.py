@@ -15,6 +15,7 @@ lineage.py.  When the stubs are absent (local dev without a build),
 the tests fall back to the original AST-extraction approach so they
 remain runnable everywhere.
 """
+
 import ast
 import os
 import textwrap
@@ -66,8 +67,17 @@ def _extract_check_same_table():
     lineage_path = os.path.normpath(
         os.path.join(
             os.path.dirname(__file__),
-            "..", "..", "..", "..", "..", "src",
-            "metadata", "ingestion", "source", "database", "trino",
+            "..",
+            "..",
+            "..",
+            "..",
+            "..",
+            "src",
+            "metadata",
+            "ingestion",
+            "source",
+            "database",
+            "trino",
             "lineage.py",
         )
     )
@@ -86,9 +96,7 @@ def _extract_check_same_table():
             # Remove the indentation and self parameter for standalone use
             func_source = textwrap.dedent(func_source)
             # Replace 'self, ' to make it a plain function
-            func_source = func_source.replace(
-                "def check_same_table(self, ", "def check_same_table("
-            )
+            func_source = func_source.replace("def check_same_table(self, ", "def check_same_table(")
 
             ns = {}
             exec(compile(func_source, "<check_same_table>", "exec"), ns)
@@ -133,19 +141,13 @@ class TestCheckSameTable:
         Trino returns 'orders', source system stored 'ORDERS'.
         check_same_table must return True -- this is the core #27419 case.
         """
-        trino_table = _make_table(
-            "trino.hive.public.orders", "orders", ["id", "amount"]
-        )
-        source_table = _make_table(
-            "postgres.hive.PUBLIC.ORDERS", "ORDERS", ["ID", "AMOUNT"]
-        )
+        trino_table = _make_table("trino.hive.public.orders", "orders", ["id", "amount"])
+        source_table = _make_table("postgres.hive.PUBLIC.ORDERS", "ORDERS", ["ID", "AMOUNT"])
         assert _call_check_same_table(trino_table, source_table) is True
 
     def test_trino_lowercase_vs_source_mixedcase_matches(self):
         """Mixed-case source table name also matches."""
-        trino_table = _make_table(
-            "trino.hive.public.customer_orders", "customer_orders", ["id"]
-        )
+        trino_table = _make_table("trino.hive.public.customer_orders", "customer_orders", ["id"])
         source_table = _make_table(
             "postgres.hive.public.Customer_Orders",
             "Customer_Orders",
@@ -167,12 +169,8 @@ class TestCheckSameTable:
 
     def test_column_case_insensitive_match(self):
         """Columns with different cases should still match."""
-        trino_table = _make_table(
-            "trino.db.s.orders", "orders", ["id", "customer_name"]
-        )
-        source_table = _make_table(
-            "pg.db.s.orders", "orders", ["ID", "CUSTOMER_NAME"]
-        )
+        trino_table = _make_table("trino.db.s.orders", "orders", ["id", "customer_name"])
+        source_table = _make_table("pg.db.s.orders", "orders", ["ID", "CUSTOMER_NAME"])
         assert _call_check_same_table(trino_table, source_table) is True
 
     def test_empty_columns_match(self):
@@ -204,13 +202,11 @@ class TestFqnFallbackLogic:
         cross_database_fqn = "postgres_service.hive_db"
 
         # Replicate the production logic
-        as_built = trino_table_fqn.replace(
-            trino_database_fqn, cross_database_fqn
-        )
+        as_built = trino_table_fqn.replace(trino_database_fqn, cross_database_fqn)
         assert as_built == "postgres_service.hive_db.MySchema.MyTable"
 
         # Fallback logic
-        fqn_suffix = trino_table_fqn[len(trino_database_fqn):]
+        fqn_suffix = trino_table_fqn[len(trino_database_fqn) :]
         lower_fqn = cross_database_fqn + fqn_suffix.lower()
         assert lower_fqn == "postgres_service.hive_db.myschema.mytable"
 
@@ -223,7 +219,7 @@ class TestFqnFallbackLogic:
         trino_database_fqn = "Trino_Svc.HiveDB"
         cross_database_fqn = "Postgres_Svc.HiveDB"
 
-        fqn_suffix = trino_table_fqn[len(trino_database_fqn):]
+        fqn_suffix = trino_table_fqn[len(trino_database_fqn) :]
         lower_fqn = cross_database_fqn + fqn_suffix.lower()
 
         # Service prefix is PRESERVED; only suffix is lowered
@@ -238,10 +234,8 @@ class TestFqnFallbackLogic:
         trino_database_fqn = "trino.hive"
         cross_database_fqn = "pg.hive"
 
-        as_built = trino_table_fqn.replace(
-            trino_database_fqn, cross_database_fqn
-        )
-        fqn_suffix = trino_table_fqn[len(trino_database_fqn):]
+        as_built = trino_table_fqn.replace(trino_database_fqn, cross_database_fqn)
+        fqn_suffix = trino_table_fqn[len(trino_database_fqn) :]
         lower_fqn = cross_database_fqn + fqn_suffix.lower()
 
         assert as_built == lower_fqn == "pg.hive.public.orders"
@@ -256,9 +250,7 @@ class TestFqnFallbackLogic:
         trino_database_fqn = "trino_svc.hive"
         cross_database_fqn = "pg_svc.hive"
 
-        resolved = _make_table(
-            "pg_svc.hive.myschema.mytable", "mytable", ["id"]
-        )
+        resolved = _make_table("pg_svc.hive.myschema.mytable", "mytable", ["id"])
 
         def mock_get_by_name(entity, fqn):
             if fqn == "pg_svc.hive.myschema.mytable":
@@ -269,14 +261,12 @@ class TestFqnFallbackLogic:
         metadata.get_by_name.side_effect = mock_get_by_name
 
         # Step 1: as-built lookup
-        as_built = trino_table_fqn.replace(
-            trino_database_fqn, cross_database_fqn
-        )
+        as_built = trino_table_fqn.replace(trino_database_fqn, cross_database_fqn)
         result = metadata.get_by_name(object, fqn=as_built)
         assert result is None
 
         # Step 2: fallback
-        fqn_suffix = trino_table_fqn[len(trino_database_fqn):]
+        fqn_suffix = trino_table_fqn[len(trino_database_fqn) :]
         lower_fqn = cross_database_fqn + fqn_suffix.lower()
         result = metadata.get_by_name(object, fqn=lower_fqn)
         assert result is resolved
@@ -287,14 +277,10 @@ class TestFqnFallbackLogic:
         should be needed.  Regression test for existing behavior.
         """
         metadata = MagicMock()
-        resolved = _make_table(
-            "pg.hive.public.orders", "orders", ["id"]
-        )
+        resolved = _make_table("pg.hive.public.orders", "orders", ["id"])
         metadata.get_by_name.return_value = resolved
 
-        result = metadata.get_by_name(
-            object, fqn="pg.hive.public.orders"
-        )
+        result = metadata.get_by_name(object, fqn="pg.hive.public.orders")
         assert result is resolved
         metadata.get_by_name.assert_called_once()
 
@@ -322,9 +308,7 @@ class TestYieldCrossDatabaseLineage:
         to the lowercased schema+table suffix and yields lineage.
         """
         source = MagicMock()
-        source.get_cross_database_fqn_from_service_names.return_value = [
-            "pg_svc.hive"
-        ]
+        source.get_cross_database_fqn_from_service_names.return_value = ["pg_svc.hive"]
         source.config.serviceName = "trino"
 
         # Database that Trino enumerates
@@ -333,9 +317,7 @@ class TestYieldCrossDatabaseLineage:
 
         # Table inside that database (Trino folds to lowercase, but let's
         # simulate a mixed-case FQN that the metadata API could return)
-        trino_table = _make_table(
-            "trino.hive.MySchema.MyTable", "mytable", ["id"]
-        )
+        trino_table = _make_table("trino.hive.MySchema.MyTable", "mytable", ["id"])
 
         def mock_list_all(entity, params):
             if entity is Database:
@@ -347,9 +329,7 @@ class TestYieldCrossDatabaseLineage:
         source.metadata.list_all_entities.side_effect = mock_list_all
 
         # Target table found only via the lowercased fallback FQN
-        cross_db_table = _make_table(
-            "pg_svc.hive.myschema.mytable", "mytable", ["ID"]
-        )
+        cross_db_table = _make_table("pg_svc.hive.myschema.mytable", "mytable", ["ID"])
 
         def mock_get_by_name(entity, fqn):
             if fqn == "pg_svc.hive.MySchema.MyTable":
@@ -361,20 +341,14 @@ class TestYieldCrossDatabaseLineage:
         source.metadata.get_by_name.side_effect = mock_get_by_name
 
         # Wire check_same_table to the real implementation
-        source.check_same_table = (
-            lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
-        )
+        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
         source.get_cross_database_lineage.return_value = "lineage_edge"
 
-        results = list(
-            TrinoLineageSource.yield_cross_database_lineage(source)
-        )
+        results = list(TrinoLineageSource.yield_cross_database_lineage(source))
 
         assert len(results) == 1
         assert results[0] == "lineage_edge"
-        source.get_cross_database_lineage.assert_called_once_with(
-            cross_db_table, trino_table
-        )
+        source.get_cross_database_lineage.assert_called_once_with(cross_db_table, trino_table)
         # Two API lookups: as-built (None) + fallback (found)
         assert source.metadata.get_by_name.call_count == 2
 
@@ -384,16 +358,12 @@ class TestYieldCrossDatabaseLineage:
         no fallback logic fires and only one get_by_name call happens.
         """
         source = MagicMock()
-        source.get_cross_database_fqn_from_service_names.return_value = [
-            "pg.hive"
-        ]
+        source.get_cross_database_fqn_from_service_names.return_value = ["pg.hive"]
         source.config.serviceName = "trino"
 
         trino_db = MagicMock()
         trino_db.fullyQualifiedName.root = "trino.hive"
-        trino_table = _make_table(
-            "trino.hive.public.orders", "orders", ["id"]
-        )
+        trino_table = _make_table("trino.hive.public.orders", "orders", ["id"])
 
         def mock_list_all(entity, params):
             if entity is Database:
@@ -404,9 +374,7 @@ class TestYieldCrossDatabaseLineage:
 
         source.metadata.list_all_entities.side_effect = mock_list_all
 
-        cross_db_table = _make_table(
-            "pg.hive.public.orders", "orders", ["id"]
-        )
+        cross_db_table = _make_table("pg.hive.public.orders", "orders", ["id"])
 
         def mock_get_by_name(entity, fqn):
             if fqn == "pg.hive.public.orders":
@@ -414,14 +382,10 @@ class TestYieldCrossDatabaseLineage:
             return None
 
         source.metadata.get_by_name.side_effect = mock_get_by_name
-        source.check_same_table = (
-            lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
-        )
+        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
         source.get_cross_database_lineage.return_value = "lineage_edge"
 
-        results = list(
-            TrinoLineageSource.yield_cross_database_lineage(source)
-        )
+        results = list(TrinoLineageSource.yield_cross_database_lineage(source))
 
         assert len(results) == 1
         assert results[0] == "lineage_edge"
@@ -434,16 +398,12 @@ class TestYieldCrossDatabaseLineage:
         fallback FQNs, no lineage edge is yielded.
         """
         source = MagicMock()
-        source.get_cross_database_fqn_from_service_names.return_value = [
-            "pg.hive"
-        ]
+        source.get_cross_database_fqn_from_service_names.return_value = ["pg.hive"]
         source.config.serviceName = "trino"
 
         trino_db = MagicMock()
         trino_db.fullyQualifiedName.root = "trino.hive"
-        trino_table = _make_table(
-            "trino.hive.public.orders", "orders", ["id"]
-        )
+        trino_table = _make_table("trino.hive.public.orders", "orders", ["id"])
 
         def mock_list_all(entity, params):
             if entity is Database:
@@ -454,13 +414,9 @@ class TestYieldCrossDatabaseLineage:
 
         source.metadata.list_all_entities.side_effect = mock_list_all
         source.metadata.get_by_name.return_value = None
-        source.check_same_table = (
-            lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
-        )
+        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
 
-        results = list(
-            TrinoLineageSource.yield_cross_database_lineage(source)
-        )
+        results = list(TrinoLineageSource.yield_cross_database_lineage(source))
 
         assert len(results) == 0
 
@@ -470,9 +426,7 @@ class TestYieldCrossDatabaseLineage:
         the same FQN across different cross-database service candidates.
         """
         source = MagicMock()
-        source.get_cross_database_fqn_from_service_names.return_value = [
-            "pg.hive"
-        ]
+        source.get_cross_database_fqn_from_service_names.return_value = ["pg.hive"]
         source.config.serviceName = "trino"
 
         trino_db = MagicMock()
@@ -501,16 +455,10 @@ class TestYieldCrossDatabaseLineage:
             return None
 
         source.metadata.get_by_name.side_effect = mock_get_by_name
-        source.check_same_table = (
-            lambda t1_, t2_: TrinoLineageSource.check_same_table(
-                source, t1_, t2_
-            )
-        )
+        source.check_same_table = lambda t1_, t2_: TrinoLineageSource.check_same_table(source, t1_, t2_)
         source.get_cross_database_lineage.return_value = "lineage_edge"
 
-        results = list(
-            TrinoLineageSource.yield_cross_database_lineage(source)
-        )
+        results = list(TrinoLineageSource.yield_cross_database_lineage(source))
 
         assert len(results) == 2
         # Each unique FQN is looked up exactly once (cache hit on repeats)
