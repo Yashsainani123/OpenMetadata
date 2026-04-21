@@ -96,7 +96,9 @@ def _extract_check_same_table():
             # Remove the indentation and self parameter for standalone use
             func_source = textwrap.dedent(func_source)
             # Replace 'self, ' to make it a plain function
-            func_source = func_source.replace("def check_same_table(self, ", "def check_same_table(")
+            func_source = func_source.replace(
+                "def check_same_table(self, ", "def check_same_table("
+            )
 
             ns = {}
             exec(compile(func_source, "<check_same_table>", "exec"), ns)
@@ -141,13 +143,19 @@ class TestCheckSameTable:
         Trino returns 'orders', source system stored 'ORDERS'.
         check_same_table must return True -- this is the core #27419 case.
         """
-        trino_table = _make_table("trino.hive.public.orders", "orders", ["id", "amount"])
-        source_table = _make_table("postgres.hive.PUBLIC.ORDERS", "ORDERS", ["ID", "AMOUNT"])
+        trino_table = _make_table(
+            "trino.hive.public.orders", "orders", ["id", "amount"]
+        )
+        source_table = _make_table(
+            "postgres.hive.PUBLIC.ORDERS", "ORDERS", ["ID", "AMOUNT"]
+        )
         assert _call_check_same_table(trino_table, source_table) is True
 
     def test_trino_lowercase_vs_source_mixedcase_matches(self):
         """Mixed-case source table name also matches."""
-        trino_table = _make_table("trino.hive.public.customer_orders", "customer_orders", ["id"])
+        trino_table = _make_table(
+            "trino.hive.public.customer_orders", "customer_orders", ["id"]
+        )
         source_table = _make_table(
             "postgres.hive.public.Customer_Orders",
             "Customer_Orders",
@@ -169,7 +177,9 @@ class TestCheckSameTable:
 
     def test_column_case_insensitive_match(self):
         """Columns with different cases should still match."""
-        trino_table = _make_table("trino.db.s.orders", "orders", ["id", "customer_name"])
+        trino_table = _make_table(
+            "trino.db.s.orders", "orders", ["id", "customer_name"]
+        )
         source_table = _make_table("pg.db.s.orders", "orders", ["ID", "CUSTOMER_NAME"])
         assert _call_check_same_table(trino_table, source_table) is True
 
@@ -341,14 +351,18 @@ class TestYieldCrossDatabaseLineage:
         source.metadata.get_by_name.side_effect = mock_get_by_name
 
         # Wire check_same_table to the real implementation
-        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
+        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(
+            source, t1, t2
+        )
         source.get_cross_database_lineage.return_value = "lineage_edge"
 
         results = list(TrinoLineageSource.yield_cross_database_lineage(source))
 
         assert len(results) == 1
         assert results[0] == "lineage_edge"
-        source.get_cross_database_lineage.assert_called_once_with(cross_db_table, trino_table)
+        source.get_cross_database_lineage.assert_called_once_with(
+            cross_db_table, trino_table
+        )
         # Two API lookups: as-built (None) + fallback (found)
         assert source.metadata.get_by_name.call_count == 2
 
@@ -382,7 +396,9 @@ class TestYieldCrossDatabaseLineage:
             return None
 
         source.metadata.get_by_name.side_effect = mock_get_by_name
-        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
+        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(
+            source, t1, t2
+        )
         source.get_cross_database_lineage.return_value = "lineage_edge"
 
         results = list(TrinoLineageSource.yield_cross_database_lineage(source))
@@ -414,7 +430,9 @@ class TestYieldCrossDatabaseLineage:
 
         source.metadata.list_all_entities.side_effect = mock_list_all
         source.metadata.get_by_name.return_value = None
-        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(source, t1, t2)
+        source.check_same_table = lambda t1, t2: TrinoLineageSource.check_same_table(
+            source, t1, t2
+        )
 
         results = list(TrinoLineageSource.yield_cross_database_lineage(source))
 
@@ -455,7 +473,9 @@ class TestYieldCrossDatabaseLineage:
             return None
 
         source.metadata.get_by_name.side_effect = mock_get_by_name
-        source.check_same_table = lambda t1_, t2_: TrinoLineageSource.check_same_table(source, t1_, t2_)
+        source.check_same_table = lambda t1_, t2_: TrinoLineageSource.check_same_table(
+            source, t1_, t2_
+        )
         source.get_cross_database_lineage.return_value = "lineage_edge"
 
         results = list(TrinoLineageSource.yield_cross_database_lineage(source))
