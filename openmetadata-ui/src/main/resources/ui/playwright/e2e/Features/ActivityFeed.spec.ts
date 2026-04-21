@@ -19,8 +19,6 @@ import { UserClass } from '../../support/user/UserClass';
 import { REACTION_EMOJIS, reactOnFeed } from '../../utils/activityFeed';
 import { performAdminLogin } from '../../utils/admin';
 import {
-  getAuthContext,
-  getToken,
   redirectToHomePage,
   removeLandingBanner,
   uuid,
