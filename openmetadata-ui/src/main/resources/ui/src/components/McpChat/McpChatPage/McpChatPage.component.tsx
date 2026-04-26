@@ -51,6 +51,7 @@ export const McpChatPage: React.FC = () => {
   /* ---- Refs ---- */
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const activeConversationIdRef = useRef<string | null>(routeConversationId ?? null);
 
   /* ---- BUG 1 FIX: abort in-flight stream on unmount ---- */
   useEffect(() => () => {
@@ -105,6 +106,10 @@ export const McpChatPage: React.FC = () => {
   useEffect(() => {
     setActiveConversationId(routeConversationId ?? null);
   }, [routeConversationId]);
+
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   /* ---- Select conversation ---- */
   const handleSelectConversation = useCallback(
@@ -223,9 +228,7 @@ export const McpChatPage: React.FC = () => {
             setMessages((prev) =>
               prev
                 .filter(
-                  (m) =>
-                    !m.id.startsWith('optimistic-') &&
-                    m.id !== 'streaming-assistant'
+                  (m) => m.id !== 'streaming-assistant'
                 )
                 .concat(completeMsg)
             );
@@ -233,7 +236,7 @@ export const McpChatPage: React.FC = () => {
             // Update conversation in sidebar if new
             if (
               completeMsg.id &&
-              !activeConversationId
+              !activeConversationIdRef.current
             ) {
               const refreshed = await getConversations();
               setConversations(refreshed);
@@ -277,7 +280,11 @@ export const McpChatPage: React.FC = () => {
     } finally {
       // BUG 5 FIX: always clean up optimistic messages in finally
       setMessages((prev) =>
-        prev.filter((m) => !m.id.startsWith('optimistic-'))
+        prev.filter(
+          (m) =>
+            !m.id.startsWith('optimistic-') &&
+            m.id !== 'streaming-assistant'
+        )
       );
       setIsStreaming(false);
     }

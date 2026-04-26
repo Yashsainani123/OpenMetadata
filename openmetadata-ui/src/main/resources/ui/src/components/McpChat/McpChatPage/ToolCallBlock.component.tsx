@@ -44,7 +44,7 @@ export const ToolCallBlock: React.FC<ToolCallBlockProps> = ({ toolCall }) => {
           </div>
 
           {toolCall.result !== undefined && (
-            <div style={{ marginTop: 8 }}>
+            <div className="m-t-sm">
               <Text strong>{t('label.result')}:</Text>
               <pre data-testid="tool-call-result">
                 {JSON.stringify(toolCall.result, null, 2)}
